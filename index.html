@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula AI - Creative Search & Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --glass: rgba(15, 15, 25, 0.6);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #050505;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Ambient Background */
+        .bg-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(217, 70, 239, 0.1) 0%, transparent 40%);
+            z-index: -2;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: float 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        .orb-1 { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -100px; }
+        .orb-2 { width: 500px; height: 500px; background: #ec4899; bottom: -150px; right: -50px; animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.05); }
+        }
+
+        /* Glassmorphism Frame */
+        .app-container {
+            display: flex;
+            width: 1200px;
+            max-width: 95vw;
+            height: 850px;
+            background: var(--glass);
+            backdrop-filter: blur(40px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 3rem;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Left Sidebar (History/Tools) */
+        .sidebar {
+            width: 300px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .sidebar-item {
+            padding: 0.85rem 1rem;
+            border-radius: 1.25rem;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .sidebar-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            box-shadow: inset 0 0 10px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Chat Section */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .msg-bubble {
+            max-width: 85%;
+            padding: 1.25rem 1.5rem;
+            border-radius: 1.75rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .bot-msg {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .user-msg {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            align-self: flex-end;
+            border-bottom-right-radius: 0.5rem;
+            box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Usage Grid Cards */
+        .usage-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .usage-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        /* Image Results */
+        .image-result {
+            margin-top: 1rem;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s;
+            cursor: zoom-in;
+        }
+
+        /* Neural Pulse Loader */
+        .neural-loader {
+            display: flex;
+            gap: 6px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: neuralPulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes neuralPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.5); opacity: 1; box-shadow: 0 0 15px var(--accent); }
+        }
+
+        /* Floating Input Dock */
+        .dock-container {
+            padding: 2rem 3rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+        }
+
+        .input-dock {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-dock:focus-within {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            flex: 1;
+            font-size: 1rem;
+            height: 50px;
+        }
+
+        .source-pill {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            color: #a5b4fc;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px;
+        }
+
+        #chat-window::-webkit-scrollbar { width: 4px; }
+        #chat-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 mb-12 px-2">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl text-xl">
+                    <i class="fas fa-ghost"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight leading-none">Nebula</h1>
+                    <span class="text-[10px] text-white/30 font-bold tracking-widest uppercase">Creative OS</span>
+                </div>
+            </div>
+
+            <nav class="flex-1">
+                <p class="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-4 px-2">Capabilities</p>
+                <div class="sidebar-item active">
+                    <i class="fas fa-atom"></i>
+                    <span>General Intelligence</span>
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-brush"></i>
+                    <span>Image Generation</span>
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-globe"></i>
+                    <span>Live Search</span>
+                </div>
+                
+                <p class="text-[10px] uppercase tracking-widest text-white/30 font-bold mt-12 mb-4 px-2">Usage Monitor</p>
+                <div class="px-2 space-y-4">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span>NEURAL LOAD</span>
+                            <span class="text-indigo-400">42%</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                            <div class="bg-indigo-500 w-[42%] h-full shadow-[0_0_8px_var(--accent)]"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span>API QUOTA</span>
+                            <span class="text-pink-400">89%</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                            <div class="bg-pink-500 w-[89%] h-full shadow-[0_0_8px_#ec4899]"></div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="mt-auto px-2">
+                <div class="bg-gradient-to-br from-white/10 to-transparent rounded-2xl p-5 border border-white/10">
+                    <p class="text-xs font-bold mb-1">Upgrade to Elite</p>
+                    <p class="text-[10px] text-white/40 mb-3">Unlock Imagen 4.0 High-Res & Infinite Search Grounding.</p>
+                    <button class="w-full py-2 bg-white text-black text-[10px] font-bold rounded-lg hover:bg-white/90 transition-all">BOOST ENGINE</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <!-- Header -->
+            <header class="h-24 flex items-center justify-between px-10 border-b border-white/5">
+                <div class="flex items-center gap-5">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-white/40 uppercase tracking-tighter">Current Session</span>
+                        <h2 class="text-lg font-bold">Visual Design & Research</h2>
+                    </div>
+                    <div class="h-8 w-[1px] bg-white/10"></div>
+                    <div class="text-emerald-400 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Live Grounding Enabled
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-all">NEW CHAT</button>
+                    <div class="w-10 h-10 rounded-full border border-white/10 overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat Window -->
+            <section id="chat-window" class="flex-1 overflow-y-auto px-12 py-10 flex flex-col">
+                <div class="mb-10">
+                    <h2 class="text-2xl font-bold mb-2">How can I assist your workflow?</h2>
+                    <p class="text-white/40 text-sm mb-8">Choose a starting point or type a custom command below.</p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="usage-card" onclick="fillPrompt('Draw a surreal landscape of a city built on the back of a giant whale floating in space')">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-4">
+                                <i class="fas fa-palette"></i>
+                            </div>
+                            <h4 class="font-bold text-sm mb-1">Generate Art</h4>
+                            <p class="text-xs text-white/40 leading-relaxed">Create high-fidelity visuals using natural language descriptions.</p>
+                        </div>
+                        <div class="usage-card" onclick="fillPrompt('What are the top 5 emerging technologies in sustainable energy for 2025?')">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <h4 class="font-bold text-sm mb-1">Web Research</h4>
+                            <p class="text-xs text-white/40 leading-relaxed">Get grounded answers with real-time web citations and links.</p>
+                        </div>
+                        <div class="usage-card" onclick="fillPrompt('Write a clean React component for a glassmorphism card with Tailwind CSS')">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <h4 class="font-bold text-sm mb-1">Code Logic</h4>
+                            <p class="text-xs text-white/40 leading-relaxed">Architect components, debug logic, or explain complex algorithms.</p>
+                        </div>
+                        <div class="usage-card" onclick="fillPrompt('Analyze the current trends in UI/UX for mobile apps in 2025')">
+                            <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center mb-4">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <h4 class="font-bold text-sm mb-1">Market Analysis</h4>
+                            <p class="text-xs text-white/40 leading-relaxed">Synthesize data into actionable insights for your projects.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Input Dock -->
+            <footer class="dock-container">
+                <div class="input-dock">
+                    <button class="text-white/30 hover:text-indigo-400 transition-colors mr-1">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <input type="text" id="user-input" placeholder="Whisper a command or prompt..." autocomplete="off">
+                    <div class="flex items-center gap-2 pr-1">
+                        <button id="art-btn" title="Image Mode" class="w-10 h-10 rounded-xl hover:bg-white/10 text-white/30 transition-all">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </button>
+                        <button id="send-btn" class="w-12 h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all shadow-lg active:scale-90">
+                            <i class="fas fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+      
+    const chatWindow = document.getElementById('chat-window');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function fillPrompt(p) { 
+        userInput.value = p; 
+        userInput.focus(); 
+    }
+
+    function createMessage(content, isUser = false) {
+        const div = document.createElement('div');
+        div.className = `msg-bubble ${isUser ? 'user-msg' : 'bot-msg'}`;
+        
+        // Basic Markdown-like bolding and line breaks
+        let formatted = content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        div.innerHTML = formatted.replace(/\n/g, '<br>');
+
+        chatWindow.appendChild(div);
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        return div;
+    }
+
+    function showLoading() {
+        const div = document.createElement('div');
+        div.className = 'msg-bubble bot-msg';
+        div.id = "active-loader";
+        div.innerHTML = `
+            <div class="neural-loader">
+                <div class="pulse-dot"></div>
+                <div class="pulse-dot" style="animation-delay: 0.2s"></div>
+                <div class="pulse-dot" style="animation-delay: 0.4s"></div>
+                <span class="ml-2 text-[10px] text-white/30 font-bold uppercase tracking-widest">Synthesizing...</span>
+            </div>
+        `;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        return div;
+    }
+
+    async function handleInteraction() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. Show user message
+        createMessage(text, true);
+        userInput.value = '';
+
+        // 2. Show loader
+        const loader = showLoading();
+
+        try {
+            // 3. Fetch from Flask Backend
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            
+            // 4. Remove loader and show reply
+            loader.remove();
+            if (data.reply) {
+                createMessage(data.reply, false);
+            } else {
+                createMessage("Error: " + (data.error || "Unknown error"), false);
+            }
+
+        } catch (error) {
+            loader.remove();
+            createMessage("Connection failed. Is the Flask server running?", false);
+            console.error(error);
+        }
+    }
+
+    // Event Listeners
+    sendBtn.addEventListener('click', handleInteraction);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleInteraction();
+    });
+
+
+   </script>
+</body>
+</html>
